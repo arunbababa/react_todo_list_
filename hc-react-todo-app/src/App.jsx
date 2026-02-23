@@ -3,7 +3,7 @@ import { useState } from 'react'
 function App() {
   const [todoInput, setTodoInput] = useState("");
   const [todos, setTodos] = useState([]);
-  const [editIndex, setEditIndex] = useState(null);
+  const [editTargetId, setEditTargetId] = useState(null);
   const [editInput, setEditInput] = useState("");
 
   const onChangeTodoInput = (e) => {
@@ -15,32 +15,37 @@ function App() {
   }
 
   const onClickAddTodo = () => {
-    const newTodos = [...todos, todoInput]
+    const newId = crypto.randomUUID()
+    const newTodo = {id: newId, todo: todoInput}
+    const newTodos = [...todos, newTodo]
     setTodos(newTodos)
     setTodoInput("")
   }
 
-  const onCLickRenameTodo = (index) => {
-    setEditIndex(null)
-    const newTodos = [...todos]
-    newTodos.splice(index, 1, editInput)
+  const onCLickRenameTodo = (todo) => {
+    setEditTargetId(null)
+    const newTodos = todos.map((t) => {
+      return t.id === todo.id ? {...t, todo: editInput} : t
+    })
     setTodos(newTodos)
   }
 
-  const handleEditToggle = (todo, index) => {
-    if (editIndex === index){
-      setEditIndex(null)
+  const handleEditToggle = (todo) => {
+    // 編集キャンセル時に以下が走る
+    if (editTargetId === todo.id){
+      setEditTargetId(null)
       return;
     }
-    setEditIndex(index);
-    setEditInput(todo);
+    setEditTargetId(todo.id);
+    setEditInput(todo.todo);
   }
 
-  const onClickDeleteTodo = (todo, index) => {
-    if (!confirm(`${todo}を削除しますか？`)) return;
+  const onClickDeleteTodo = (deleteTargetTodo) => {
+    if (!confirm(`${deleteTargetTodo.todo}を削除しますか？`)) return;
 
-    const newTodos = [...todos]
-    newTodos.splice(index, 1)
+    const newTodos = todos.filter((t) => {
+      return t.id !== deleteTargetTodo.id
+    })
     setTodos(newTodos)
   }
 
@@ -57,22 +62,22 @@ function App() {
         <h3>TODOリスト</h3>
         <ul>
           {
-            todos.map((todo, index) => (
-              <li key={index}>
+            todos.map((todo) => (
+              <li key={todo.id}>
                 <div className='todo-item'>
                   {
-                    editIndex === index ? (
+                    editTargetId  === todo.id ? (
                       <>
                         <input type="text" value={editInput} onChange={onChangeEditInput}/>
-                        <button onClick={() => onCLickRenameTodo(index)}>保存</button>
-                        <button onClick={() => handleEditToggle(todo, index)}>キャンセル</button>
+                        <button onClick={() => onCLickRenameTodo(todo)}>保存</button>
+                        <button onClick={() => handleEditToggle(todo)}>キャンセル</button>
                       </>
                     ):
                     (
                       <>
-                        <p>{todo}</p>
-                        <button onClick={() => handleEditToggle(todo, index)}>編集</button>
-                        <button onClick={() => onClickDeleteTodo(todo, index)}>削除</button>
+                        <p>{todo.todo}</p>
+                        <button onClick={() => handleEditToggle(todo)}>編集</button>
+                        <button onClick={() => onClickDeleteTodo(todo)}>削除</button>
                       </>
                     )
                   }
