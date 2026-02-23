@@ -1,10 +1,23 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 function App() {
   const [todoInput, setTodoInput] = useState("");
   const [todos, setTodos] = useState([]);
   const [editTargetId, setEditTargetId] = useState(null);
   const [editInput, setEditInput] = useState("");
+
+  // stateではなく、todosから毎回導出する
+  const allTodoCount = todos.length;
+  const doneTodoCount = todos.filter((t) => t.isDone).length;
+  const notDoneTodoCount = allTodoCount - doneTodoCount;
+
+  const onCheckTodoToggle = (todo) => {
+    const newTodos = todos.map((t) => {
+      return t.id === todo.id ? {...t, isDone: !t.isDone} : t
+    })
+    setTodos(newTodos);
+  }
+
 
   const onChangeTodoInput = (e) => {
     setTodoInput(e.target.value)
@@ -16,7 +29,7 @@ function App() {
 
   const onClickAddTodo = () => {
     const newId = crypto.randomUUID()
-    const newTodo = {id: newId, todo: todoInput}
+    const newTodo = {id: newId, todo: todoInput, isDone: false}
     const newTodos = [...todos, newTodo]
     setTodos(newTodos)
     setTodoInput("")
@@ -54,6 +67,12 @@ function App() {
       <h1>Reactで作るタスク管理アプリ</h1>
 
       <div>
+        <p>全てのタスク:{allTodoCount}</p>
+        <p>完了したタスク:{doneTodoCount}</p>
+        <p>未完了のタスク:{notDoneTodoCount}</p>
+      </div>
+
+      <div>
         <input type="text" placeholder='タスクを入力してください' onChange={onChangeTodoInput} value={todoInput}/>
         <button onClick={onClickAddTodo}>追加</button>
       </div>
@@ -75,6 +94,7 @@ function App() {
                     ):
                     (
                       <>
+                        <input onClick={() => onCheckTodoToggle(todo)} type="checkbox" />
                         <p>{todo.todo}</p>
                         <button onClick={() => handleEditToggle(todo)}>編集</button>
                         <button onClick={() => onClickDeleteTodo(todo)}>削除</button>
