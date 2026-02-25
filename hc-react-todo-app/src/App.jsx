@@ -1,33 +1,113 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [todoInput, setTodoInput] = useState("");
+  const [todos, setTodos] = useState([]);
+  const [editTargetId, setEditTargetId] = useState(null);
+  const [editInput, setEditInput] = useState("");
+
+  // stateではなく、todosから毎回導出する
+  const allTodoCount = todos.length;
+  const doneTodoCount = todos.filter((t) => t.isDone).length;
+  const notDoneTodoCount = allTodoCount - doneTodoCount;
+
+  const onCheckTodoToggle = (todo) => {
+    const newTodos = todos.map((t) => {
+      return t.id === todo.id ? {...t, isDone: !t.isDone} : t
+    })
+    setTodos(newTodos);
+  }
+
+
+  const onChangeTodoInput = (e) => {
+    setTodoInput(e.target.value)
+  }
+
+  const onChangeEditInput = (e) => {
+    setEditInput(e.target.value)
+  }
+
+  const onClickAddTodo = () => {
+    const newId = crypto.randomUUID()
+    const newTodo = {id: newId, todo: todoInput, isDone: false}
+    const newTodos = [...todos, newTodo]
+    setTodos(newTodos)
+    setTodoInput("")
+  }
+
+  const onCLickRenameTodo = (todo) => {
+    setEditTargetId(null)
+    const newTodos = todos.map((t) => {
+      return t.id === todo.id ? {...t, todo: editInput} : t
+    })
+    setTodos(newTodos)
+  }
+
+  const handleEditToggle = (todo) => {
+    // 編集キャンセル時に以下が走る
+    if (editTargetId === todo.id){
+      setEditTargetId(null)
+      return;
+    }
+    setEditTargetId(todo.id);
+    setEditInput(todo.todo);
+  }
+
+  const onClickDeleteTodo = (deleteTargetTodo) => {
+    if (!confirm(`${deleteTargetTodo.todo}を削除しますか？`)) return;
+
+    const newTodos = todos.filter((t) => {
+      return t.id !== deleteTargetTodo.id
+    })
+    setTodos(newTodos)
+  }
 
   return (
     <>
+      <h1>Reactで作るタスク管理アプリ</h1>
+
       <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <p>全てのタスク:{allTodoCount}</p>
+        <p>完了したタスク:{doneTodoCount}</p>
+        <p>未完了のタスク:{notDoneTodoCount}</p>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
+
+      <div>
+        <input type="text" placeholder='タスクを入力してください' onChange={onChangeTodoInput} value={todoInput}/>
+        <button onClick={onClickAddTodo}>追加</button>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+
+      <div className="todo-list">
+        <h3>TODOリスト</h3>
+        <ul>
+          {
+            todos.map((todo) => (
+              <li key={todo.id}>
+                <div className='todo-item'>
+                  {
+                    editTargetId  === todo.id ? (
+                      <>
+                        <input type="text" value={editInput} onChange={onChangeEditInput}/>
+                        <button onClick={() => onCLickRenameTodo(todo)}>保存</button>
+                        <button onClick={() => handleEditToggle(todo)}>キャンセル</button>
+                      </>
+                    ):
+                    (
+                      <>
+                        <input onClick={() => onCheckTodoToggle(todo)} type="checkbox" />
+                        <p>{todo.todo}</p>
+                        <button onClick={() => handleEditToggle(todo)}>編集</button>
+                        <button onClick={() => onClickDeleteTodo(todo)}>削除</button>
+                      </>
+                    )
+                  }
+                  
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
     </>
   )
 }
